@@ -2,6 +2,7 @@ mod handlers;
 mod todo;
 
 use axum::{
+    response::Html,
     routing::{get, put},
     Json, Router,
 };
@@ -14,7 +15,7 @@ async fn main() {
     let store: TodoStore = Arc::new(Mutex::new(Vec::new()));
 
     let app = Router::new()
-        .route("/", get(|| async { "Todo app loading…" }))
+        .route("/", get(index))
         .route("/health", get(health))
         .route("/api/todos", get(list_todos).post(create_todo))
         .route(
@@ -31,4 +32,8 @@ async fn main() {
 
 async fn health() -> Json<Value> {
     Json(json!({ "ok": true }))
+}
+
+async fn index() -> Html<&'static str> {
+    Html(include_str!("../static/index.html"))
 }

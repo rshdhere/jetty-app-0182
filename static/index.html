@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --surface-hover: #243044;
+      --border: #2d3a4f;
+      --text: #e7ecf3;
+      --muted: #8b9cb3;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --done: #22c55e;
+      --danger: #ef4444;
+      --radius: 12px;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(ellipse at top, #1a2744 0%, var(--bg) 55%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem 4rem;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      color: var(--muted);
+      margin-top: 0.35rem;
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .add-form {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .add-form input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      padding: 0.65rem 0.85rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .add-form input:focus {
+      border-color: var(--accent);
+    }
+
+    .add-form input::placeholder {
+      color: var(--muted);
+    }
+
+    button {
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    button:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      padding: 0.65rem 1.1rem;
+    }
+
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .filters {
+      display: flex;
+      gap: 0.35rem;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .filter-btn {
+      background: transparent;
+      color: var(--muted);
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+    }
+
+    .filter-btn:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .todo-list {
+      list-style: none;
+      max-height: 420px;
+      overflow-y: auto;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border);
+      animation: fadeIn 0.2s ease;
+    }
+
+    .todo-item:last-child { border-bottom: none; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .checkbox {
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .checkbox:hover { border-color: var(--accent); }
+
+    .todo-item.done .checkbox {
+      background: var(--done);
+      border-color: var(--done);
+    }
+
+    .checkbox svg {
+      width: 14px;
+      height: 14px;
+      stroke: #fff;
+      stroke-width: 3;
+      fill: none;
+      opacity: 0;
+    }
+
+    .todo-item.done .checkbox svg { opacity: 1; }
+
+    .todo-text {
+      flex: 1;
+      font-size: 1rem;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .todo-item.done .todo-text {
+      color: var(--muted);
+      text-decoration: line-through;
+    }
+
+    .btn-delete {
+      background: transparent;
+      color: var(--muted);
+      padding: 0.35rem 0.5rem;
+      border-radius: 6px;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .todo-item:hover .btn-delete { opacity: 1; }
+
+    .btn-delete:hover {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.12);
+    }
+
+    .empty {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--muted);
+    }
+
+    .empty-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      opacity: 0.5;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    .btn-clear {
+      background: transparent;
+      color: var(--muted);
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+    }
+
+    .btn-clear:hover:not(:disabled) {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .btn-clear:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    .error-banner {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      padding: 0.65rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .error-banner.visible { display: block; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Todo</h1>
+      <p>Stay organized, one task at a time</p>
+    </header>
+
+    <div id="error" class="error-banner" role="alert"></div>
+
+    <div class="card">
+      <form class="add-form" id="add-form">
+        <input
+          type="text"
+          id="new-todo"
+          placeholder="What needs to be done?"
+          autocomplete="off"
+          maxlength="500"
+          required
+        />
+        <button type="submit" class="btn-primary">Add</button>
+      </form>
+
+      <div class="filters" id="filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="active">Active</button>
+        <button class="filter-btn" data-filter="completed">Done</button>
+      </div>
+
+      <ul class="todo-list" id="todo-list"></ul>
+
+      <div class="stats">
+        <span id="item-count">0 items</span>
+        <button class="btn-clear" id="clear-completed" disabled>Clear completed</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = '/api/todos';
+    let todos = [];
+    let filter = 'all';
+
+    const $ = (sel) => document.querySelector(sel);
+    const listEl = $('#todo-list');
+    const countEl = $('#item-count');
+    const errorEl = $('#error');
+    const clearBtn = $('#clear-completed');
+    const form = $('#add-form');
+    const input = $('#new-todo');
+
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.classList.add('visible');
+      setTimeout(() => errorEl.classList.remove('visible'), 4000);
+    }
+
+    async function api(path, opts = {}) {
+      const res = await fetch(path, {
+        headers: { 'Content-Type': 'application/json' },
+        ...opts,
+      });
+      if (!res.ok && res.status !== 204) {
+        throw new Error(`Request failed (${res.status})`);
+      }
+      if (res.status === 204) return null;
+      return res.json();
+    }
+
+    async function loadTodos() {
+      try {
+        todos = await api(API);
+        render();
+      } catch {
+        showError('Could not load todos. Is the server running?');
+      }
+    }
+
+    function filteredTodos() {
+      if (filter === 'active') return todos.filter((t) => !t.completed);
+      if (filter === 'completed') return todos.filter((t) => t.completed);
+      return todos;
+    }
+
+    function render() {
+      const visible = filteredTodos();
+      const active = todos.filter((t) => !t.completed).length;
+      const completed = todos.filter((t) => t.completed).length;
+
+      countEl.textContent = `${active} item${active === 1 ? '' : 's'} left`;
+      clearBtn.disabled = completed === 0;
+
+      if (visible.length === 0) {
+        const msg =
+          filter === 'all'
+            ? 'No todos yet — add one above!'
+            : filter === 'active'
+            ? 'All caught up!'
+            : 'No completed todos';
+        listEl.innerHTML = `
+          <li class="empty">
+            <div class="empty-icon">${filter === 'active' ? '✓' : '📝'}</div>
+            <div>${msg}</div>
+          </li>`;
+        return;
+      }
+
+      listEl.innerHTML = visible
+        .map(
+          (t) => `
+        <li class="todo-item${t.completed ? ' done' : ''}" data-id="${t.id}">
+          <div class="checkbox" role="button" aria-label="Toggle complete" tabindex="0">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <span class="todo-text">${escapeHtml(t.text)}</span>
+          <button class="btn-delete" aria-label="Delete">✕</button>
+        </li>`
+        )
+        .join('');
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      try {
+        const todo = await api(API, {
+          method: 'POST',
+          body: JSON.stringify({ text }),
+        });
+        todos.push(todo);
+        input.value = '';
+        render();
+      } catch {
+        showError('Could not add todo');
+      }
+    });
+
+    listEl.addEventListener('click', async (e) => {
+      const item = e.target.closest('.todo-item');
+      if (!item) return;
+      const id = item.dataset.id;
+
+      if (e.target.closest('.checkbox')) {
+        const todo = todos.find((t) => t.id === id);
+        if (!todo) return;
+        try {
+          const updated = await api(`${API}/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ completed: !todo.completed }),
+          });
+          Object.assign(todo, updated);
+          render();
+        } catch {
+          showError('Could not update todo');
+        }
+      }
+
+      if (e.target.closest('.btn-delete')) {
+        try {
+          await api(`${API}/${id}`, { method: 'DELETE' });
+          todos = todos.filter((t) => t.id !== id);
+          render();
+        } catch {
+          showError('Could not delete todo');
+        }
+      }
+    });
+
+    listEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const cb = e.target.closest('.checkbox');
+        if (cb) {
+          e.preventDefault();
+          cb.click();
+        }
+      }
+    });
+
+    $('#filters').addEventListener('click', (e) => {
+      const btn = e.target.closest('.filter-btn');
+      if (!btn) return;
+      filter = btn.dataset.filter;
+      document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      render();
+    });
+
+    clearBtn.addEventListener('click', async () => {
+      const done = todos.filter((t) => t.completed);
+      try {
+        await Promise.all(done.map((t) => api(`${API}/${t.id}`, { method: 'DELETE' })));
+        todos = todos.filter((t) => !t.completed);
+        render();
+      } catch {
+        showError('Could not clear completed todos');
+      }
+    });
+
+    loadTodos();
+  </script>
+</body>
+</html>
